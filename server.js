@@ -65,8 +65,6 @@ app.post('/issue', function(req, res) {
     var amount = parseFloat(req.body.amount).toFixed(2);
     var asset  = req.body.asset;
 
-    console.log(colors.green('Account ' + receiver_account + ' want to buy ' + amount + ' ' + asset));
-
     if (!StellarSdk.Keypair.isValidPublicKey(receiver_account)) {
         return errorResponse(res, errors.TYPE_NATIVE, errors.ERR_BAD_PARAM, '[accountId] param is invalid');
     }
