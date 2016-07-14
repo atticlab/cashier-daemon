@@ -1,7 +1,7 @@
 var config = {};
 
 config.app = {
-    port: 5050
+    port: 5051
 };
 
 config.auth = {
