@@ -65,6 +65,8 @@ app.post('/issue', function(req, res) {
     var amount = parseFloat(req.body.amount).toFixed(2);
     var asset  = req.body.asset;
 
+    console.log(colors.green('Account ' + receiver_account + ' want to buy ' + amount + ' ' + asset));
+
     if (!StellarSdk.Keypair.isValidPublicKey(receiver_account)) {
         return errorResponse(res, errors.TYPE_NATIVE, errors.ERR_BAD_PARAM, '[accountId] param is invalid');
     }
@@ -109,7 +111,12 @@ app.post('/issue', function(req, res) {
         // TODO: verify max operation limit for agent account
         // TODO: verify max day operation limit for agent account
         // TODO: verify max montly operation limit for agent account    
-        
+
+        console.log(colors.green('Account ' + receiver_account + ' want to buy ' + amount + ' ' + asset));
+        console.log(colors.green('Agent balances:'));
+        console.log(colors.green(source.balances.toString()));
+        console.log(colors.green(asset + ' balance: ' + getBalance(source.balances, asset)));
+
         if (amount > getBalance(source.balances, asset)) {
             return innerError(errors.TYPE_STELLAR, errors.ERR_BALANCE_NOT_ENOUGH, asset + ': NOT ENOUGH BALANCE');
         }
