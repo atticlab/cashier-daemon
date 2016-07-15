@@ -143,12 +143,12 @@ app.post('/issue', function(req, res) {
     })
 
     .catch (err => {
-        if(err.innerType == 'inner'){
+        if(typeof err.innerType != 'undefined' && err.innerType == 'inner'){
             console.log(err);
             return errorResponse(res, err.type, err.code, err.msg);
         } else {
             console.log(err);
-            outerError = myerrors.getProtocolError(err.type);
+            outerError = myerrors.getProtocolError(typeof err.message != 'undefined' && err.message.type != 'undefined' ? err.message.type : 'unknown');
             return errorResponse(res, outerError.type, outerError.code, outerError.msg);
         }
     })

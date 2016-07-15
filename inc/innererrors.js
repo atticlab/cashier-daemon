@@ -15,7 +15,7 @@ Error.subclass = function(error_type, error_code, error_text) {
 
 ;
 
-errors.Restricted   =         Error.subclass(errorscode.TYPE_STELLAR, errorscode.ERR_RESTRICTED, 'Maximal income operation amount for this account exceeded:');
+errors.Restricted   =         Error.subclass(errorscode.TYPE_STELLAR, errorscode.ERR_RESTRICTED, 'Some restrictions/limits for this agent exceeded');
 errors.UnknownError =         Error.subclass(errorscode.TYPE_STELLAR, errorscode.ERR_UNKNOWN, 'UnknownError');
 
 errors.getProtocolError = function(code) {
