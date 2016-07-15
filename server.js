@@ -108,7 +108,7 @@ app.post('/issue', function(req, res) {
     // analyse account info
     .then(source => {
 
-        // TODO: verify incoming restriction for agent account
+        // TODO: verify outcoming restriction for agent account
         // TODO: verify max operation limit for agent account
         // TODO: verify max day operation limit for agent account
         // TODO: verify max montly operation limit for agent account
