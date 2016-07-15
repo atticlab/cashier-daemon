@@ -113,6 +113,9 @@ app.post('/issue', function(req, res) {
         // TODO: verify max day operation limit for agent account
         // TODO: verify max montly operation limit for agent account
 
+        console.log(amount);
+        console.log(getBalance(source.balances, asset));
+
         if (amount > getBalance(source.balances, asset)) {
             return innerError(errors.TYPE_STELLAR, errors.ERR_BALANCE_NOT_ENOUGH, asset + ': NOT ENOUGH BALANCE');
         }
