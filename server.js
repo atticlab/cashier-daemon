@@ -117,6 +117,9 @@ app.post('/issue', function(req, res) {
         console.log(getBalance(source.balances, asset));
 
         if (amount > getBalance(source.balances, asset)) {
+
+            console.log(asset + ': NOT ENOUGH BALANCE');
+
             return innerError(errors.TYPE_STELLAR, errors.ERR_BALANCE_NOT_ENOUGH, asset + ': NOT ENOUGH BALANCE');
         }
     })
