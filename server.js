@@ -151,7 +151,7 @@ app.post('/issue', function(req, res) {
             return errorResponse(res, err.type, err.code, err.msg);
         } else {
             console.log(err);
-            outerError = myerrors.getProtocolError(typeof err.message != 'undefined' && err.message.type != 'undefined' ? err.message.type : 'unknown');
+            outerError = myerrors.getProtocolError(typeof err.message.type != 'undefined' ? err.message.type : 'unknown');
             return errorResponse(res, outerError.type, outerError.code, outerError.msg);
         }
     })
