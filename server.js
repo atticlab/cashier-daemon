@@ -36,7 +36,7 @@ function getBalance(balances, asset) {
         return true;
     });
 
-    return balance;
+    return parseFloat(parseFloat(balance).toFixed(2));
 }
 
 var app = express();
@@ -62,7 +62,7 @@ app.use(function(req, res, next) {
 app.post('/issue', function(req, res) {
 
     var receiver_account = req.body.account;
-    var amount = parseFloat(req.body.amount).toFixed(2);
+    var amount = parseFloat(parseFloat(req.body.amount).toFixed(2));
     var asset  = req.body.asset;
 
     if (!StellarSdk.Keypair.isValidPublicKey(receiver_account)) {
@@ -113,18 +113,7 @@ app.post('/issue', function(req, res) {
         // TODO: verify max day operation limit for agent account
         // TODO: verify max montly operation limit for agent account
 
-        console.log(amount);
-        console.log(getBalance(source.balances, asset));
-
-        console.log(typeof amount);
-        console.log(typeof getBalance(source.balances, asset));
-
-        console.log(typeof amount*1);
-        console.log(typeof getBalance(source.balances, asset)*1);
-
         if (amount > getBalance(source.balances, asset)) {
-
-            console.log(asset + ': NOT ENOUGH BALANCE');
 
             return innerError(errors.TYPE_STELLAR, errors.ERR_BALANCE_NOT_ENOUGH, asset + ': NOT ENOUGH BALANCE');
         }
