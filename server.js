@@ -88,8 +88,11 @@ app.post('/issue', function(req, res) {
     // verify receiver account
     .then(accountDetails => {
 
-        if(accountDetails.type_i == StellarSdk.xdr.AccountType.accountDistributionAgent().value){
-            return innerError(errors.TYPE_STELLAR, errors.ERR_BAD_AGENT_TYPE, 'BAD AGENT TYPE');
+        if (
+            accountDetails.type_i != StellarSdk.xdr.AccountType.accountAnonymousUser().value &&
+            accountDetails.type_i != StellarSdk.xdr.AccountType.accountRegisteredUser().value
+        ) {
+            return innerError(errors.TYPE_STELLAR, errors.ERR_BAD_ACCOUNT_TYPE, 'BAD ACCOUNT TYPE');
         }
     })
     
