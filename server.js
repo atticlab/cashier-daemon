@@ -116,6 +116,12 @@ app.post('/issue', function(req, res) {
         console.log(amount);
         console.log(getBalance(source.balances, asset));
 
+        console.log(typeof amount);
+        console.log(typeof getBalance(source.balances, asset));
+
+        console.log(typeof amount*1);
+        console.log(typeof getBalance(source.balances, asset)*1);
+
         if (amount > getBalance(source.balances, asset)) {
 
             console.log(asset + ': NOT ENOUGH BALANCE');
