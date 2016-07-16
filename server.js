@@ -147,12 +147,20 @@ app.post('/issue', function(req, res) {
     })
 
     .catch (err => {
+        console.log(err);
         if(typeof err.innerType != 'undefined' && err.innerType == 'inner'){
-            console.log(err);
             return errorResponse(res, err.type, err.code, err.msg);
         } else {
-            console.log(err);
-            outerError = myerrors.getProtocolError(typeof err.message.type != 'undefined' ? err.message.type : 'unknown');
+
+            var err_type = 'unknown';
+
+            if (typeof err.message != 'undefined') {
+                if (typeof err.message.type != 'undefined') {
+                    err_type = err.message.type;
+                }
+            }
+
+            outerError = myerrors.getProtocolError(err_type);
             return errorResponse(res, outerError.type, outerError.code, outerError.msg);
         }
     })
