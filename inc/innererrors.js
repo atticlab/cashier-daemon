@@ -15,7 +15,7 @@ Error.subclass = function(error_type, error_code, error_text) {
 
 ;
 
-errors.Restricted   =         Error.subclass(errorscode.TYPE_STELLAR, errorscode.ERR_RESTRICTED, 'Some restrictions/limits for this agent exceeded');
+errors.Restricted   =         Error.subclass(errorscode.TYPE_STELLAR, errorscode.ERR_RESTRICTED, 'Some restrictions/limits for agent exceeded');
 errors.UnknownError =         Error.subclass(errorscode.TYPE_STELLAR, errorscode.ERR_UNKNOWN, 'UnknownError');
 
 errors.getProtocolError = function(code) {
