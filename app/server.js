@@ -7,7 +7,8 @@ var config = require('./config'),
     express = require('express'),
     prompt = require('prompt'),
     tools = require('./inc/tools'),
-    StellarSdk = require('stellar-sdk');
+    StellarSdk = require('stellar-sdk'),
+    nodemailer = require('nodemailer');
 
 var horizon;
 var agent_key;
@@ -114,7 +115,6 @@ app.post('/issue', function(req, res) {
         // TODO: verify max montly operation limit for agent account
 
         if (amount > getBalance(source.balances, asset)) {
-
             return innerError(errors.TYPE_STELLAR, errors.ERR_BALANCE_NOT_ENOUGH, asset + ': NOT ENOUGH BALANCE');
         }
     })
@@ -167,6 +167,27 @@ app.post('/issue', function(req, res) {
 });
 
 prompt.start();
+
+// create reusable transporter object using the default SMTP transport
+var transporter = nodemailer.createTransport(config.smtp.protocol + '://' + config.smtp.user + ':' + config.smtp.password + '@' + config.smtp.server);
+
+// setup e-mail data with unicode symbols
+var mailOptions = {
+    from: '"Cashier" <cashier@smartmoney.com.ua>', // sender address
+    to: config.notification_emails,
+    subject: 'Attention, cashier.smartmoney.com.ua run', // Subject line
+    text: 'Need to enter password', // plaintext body
+    html: '<b>Need to enter password</b>' // html body
+};
+
+// send mail with defined transport object
+transporter.sendMail(mailOptions, function(error, info){
+    if(error){
+        return console.log(error);
+    }
+    //console.log('Message sent: ' + info.response);
+});
+
 prompt.get({
     description: 'Enter emission key password',
     name: 'key',
