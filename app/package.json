@@ -10,7 +10,7 @@
     "express": "^4.13.4",
     "prompt": "^1.0.0",
     "sjcl": "^1.0.3",
-    "stellar-sdk": "git+https://atticlab:Iy0qoqIbLDYgUop0Pegcxpl0MNQbtxXv@bitbucket.org/atticlab/js-smart-sdk.git#dev",
+    "stellar-sdk": "git+https://atticlab:Iy0qoqIbLDYgUop0Pegcxpl0MNQbtxXv@bitbucket.org/atticlab/js-smart-sdk.git",
     "nodemailer": "latest"
   },
   "devDependencies": {},
