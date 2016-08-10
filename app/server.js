@@ -62,7 +62,7 @@ app.use(function(req, res, next) {
 
 app.post('/issue', function(req, res) {
 
-    var receiver_account = req.body.account;
+    var receiver_account = req.body.accountId;
     var amount = parseFloat(parseFloat(req.body.amount).toFixed(2));
     var asset  = req.body.asset;
 
