@@ -70,7 +70,7 @@ app.post('/issue', function(req, res) {
         return errorResponse(res, errors.TYPE_NATIVE, errors.ERR_BAD_ACC_PARAM, '[accountId] param is invalid');
     }
 
-    if (typeof amount == 'undefined' || !amount.length) {
+    if (typeof amount == 'undefined') {
         return errorResponse(res, errors.TYPE_NATIVE, errors.ERR_EMPTY_AMOUNT_PARAM, '[amount] param is empty');
     }
 
