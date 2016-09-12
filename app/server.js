@@ -67,25 +67,32 @@ app.post('/issue', function(req, res) {
     var asset  = req.body.asset;
 
     if (!StellarSdk.Keypair.isValidPublicKey(receiver_account)) {
-        return errorResponse(res, errors.TYPE_NATIVE, errors.ERR_BAD_PARAM, '[accountId] param is invalid');
+        return errorResponse(res, errors.TYPE_NATIVE, errors.ERR_BAD_ACC_PARAM, '[accountId] param is invalid');
     }
 
-    // Check positive amount
+    if (typeof amount == 'undefined' || !amount.length) {
+        return errorResponse(res, errors.TYPE_NATIVE, errors.ERR_EMPTY_AMOUNT_PARAM, '[amount] param is empty');
+    }
+
     if (amount <= 0) {
-        return errorResponse(res, errors.TYPE_NATIVE, errors.ERR_BAD_PARAM, '[amount] param is invalid');
+        return errorResponse(res, errors.TYPE_NATIVE, errors.ERR_BAD_AMOUNT_PARAM, '[amount] param is invalid');
     }
 
-    if (!asset.length) {
-        return errorResponse(res, errors.TYPE_NATIVE, errors.ERR_BAD_PARAM, '[asset] param is empty');
+    if (typeof asset == 'undefined' || !asset.length) {
+        return errorResponse(res, errors.TYPE_NATIVE, errors.ERR_EMPTY_ASSET_PARAM, '[asset] param is empty');
     }
 
-    // Load receiver account
-    horizon.loadAccount(receiver_account)
+    var setted_receiver_limits = {
+        daily: -1,
+        monthly: -1
+    };
+    var setted_agent_limits = {
+        daily: -1,
+        monthly: -1
+    };
 
-    // Get receiver account info
-    .then(account => {
-        return horizon.accounts().accountId(account._accountId).call()
-    })
+    // get receiver account info
+    horizon.accounts().accountId(receiver_account).call()
     // verify receiver account
     .then(accountDetails => {
 
@@ -93,26 +100,176 @@ app.post('/issue', function(req, res) {
             accountDetails.type_i != StellarSdk.xdr.AccountType.accountAnonymousUser().value &&
             accountDetails.type_i != StellarSdk.xdr.AccountType.accountRegisteredUser().value
         ) {
-            return innerError(errors.TYPE_STELLAR, errors.ERR_BAD_ACCOUNT_TYPE, 'BAD ACCOUNT TYPE');
+            return innerError(errors.TYPE_STELLAR, errors.ERR_BAD_ACCOUNT_TYPE, 'BAD RECEIVER ACCOUNT TYPE');
         }
     })
-    
-    // TODO: verify incoming restriction for receiver account
-    // TODO: verify max operation limit for receiver account
-    // TODO: verify max day operation limit for receiver account
-    // TODO: verify max montly operation limit for receiver account
-
-    // Load agent account info
-    .then(() => {
-        return horizon.accounts().accountId(config.agent_public_key).call()
+    // get receiver traits
+    .then(function() {
+        return horizon.accounts().traits(receiver_account).call();
     })
-    // analyse account info
-    .then(source => {
+    // check receiver incoming restrictions
+    .then(function (traits) {
+        if (traits.block_incoming_payments == true) {
+            return innerError(errors.TYPE_STELLAR, errors.OP_BLOCKED, 'RECEIVER INCOMING OPERATION BLOCK');
+        }
+    })
+    // get receiver limits
+    .then(function() {
+        return horizon.accounts().limits(receiver_account).call();
+    })
+    // check receiver incoming operation limit
+    .then(function(limits_data) {
 
-        // TODO: verify outcoming restriction for agent account
-        // TODO: verify max operation limit for agent account
-        // TODO: verify max day operation limit for agent account
-        // TODO: verify max montly operation limit for agent account
+        if (typeof limits_data.limits != 'undefined' && limits_data.limits.length > 0) {
+
+            var limits = limits_data.limits;
+
+            Object.keys(limits).forEach(function(key) {
+                if (limits[key].asset_code == asset) {
+
+                    //-1 is no limit
+                    if(limits[key].max_operation_in > -1) {
+                        if (limits[key].max_operation_in < amount) {
+                            return innerError(errors.TYPE_STELLAR, errors.ERR_MAX_OPERATION_LIMIT, 'RECEIVER MAX OPERATION LIMIT IS EXCEEDED');
+                        }
+                    }
+
+                    setted_receiver_limits.daily   = limits[key].daily_max_in*1;
+                    setted_receiver_limits.monthly = limits[key].monthly_max_in*1;
+                }
+            });
+
+        }
+    })
+    //get statistic
+    .then(function() {
+        return horizon
+            .accounts()
+            .statisticsForAccount(receiver_account)
+            .call();
+    })
+    // check statistic
+    .then(function(statistic_data) {
+
+        var used_receiver_limits = {
+            daily: 0,
+            monthly: 0
+        };
+
+        if (typeof statistic_data.statistics != 'undefined' && statistic_data.statistics.length > 0) {
+
+            var stats = statistic_data.statistics;
+
+            Object.keys(stats).forEach(function (key) {
+                if (stats[key].asset_code == asset) {
+                    used_receiver_limits.daily   += stats[key].income.daily*1;
+                    used_receiver_limits.monthly += stats[key].income.monthly*1;
+                }
+            });
+
+        }
+
+        //if daily limit setted for agent
+        if (setted_receiver_limits.daily > -1) {
+            if (setted_receiver_limits.daily < used_receiver_limits.daily + amount) {
+                //daily limit is EXCEEDED
+                return innerError(errors.TYPE_STELLAR, errors.ERR_DAILY_OPERATION_LIMIT, 'RECEIVER DAILY OPERATION LIMIT IS EXCEEDED');
+            }
+        }
+
+        //if monthly limit setted for agent
+        if (setted_receiver_limits.monthly > -1) {
+            if (setted_receiver_limits.monthly < used_receiver_limits.monthly + amount) {
+                //monthly limit is EXCEEDED
+                return innerError(errors.TYPE_STELLAR, errors.ERR_MONTHLY_OPERATION_LIMIT, 'RECEIVER MONTHLY OPERATION LIMIT IS EXCEEDED');
+            }
+        }
+
+    })
+    // get agent traits
+    .then(function() {
+        return horizon.accounts().traits(config.agent_public_key).call();
+    })
+    //check agent outcoming restrictions
+    .then(function (traits) {
+        if (traits.block_outcoming_payments == true) {
+            return innerError(errors.TYPE_STELLAR, errors.OP_BLOCKED, 'AGENT OUTCOMING OPERATION BLOCK');
+        }
+    })
+    // get agent limits
+    .then(function() {
+        return horizon.accounts().limits(config.agent_public_key).call();
+    })
+    // check agent outcoming operation limit
+    .then(function(limits_data) {
+
+        if (typeof limits_data.limits != 'undefined' && limits_data.limits.length > 0) {
+
+            var limits = limits_data.limits;
+
+            Object.keys(limits).forEach(function(key) {
+                if (limits[key].asset_code == asset) {
+
+                    //-1 is no limit
+                    if(limits[key].max_operation_out > -1) {
+                        if (limits[key].max_operation_out < parseFloat(parseFloat(amount).toFixed(2))) {
+                            return innerError(errors.TYPE_STELLAR, errors.ERR_MAX_OPERATION_LIMIT, 'AGENT MAX OPERATION LIMIT IS EXCEEDED');
+                        }
+                    }
+
+                    setted_agent_limits.daily   = limits[key].daily_max_out*1;
+                    setted_agent_limits.monthly = limits[key].monthly_max_out*1;
+                }
+            });
+
+        }
+    })
+    //get agent statistic
+    .then(function() {
+        return horizon.accounts().statisticsForAccount(config.agent_public_key).call();
+    })
+    // check agent statistic
+    .then(function(statistic_data) {
+
+        var used_agent_limits = {
+            daily: 0,
+            monthly: 0
+        };
+
+        if (typeof statistic_data.statistics != 'undefined' && statistic_data.statistics.length > 0) {
+
+            var stats = statistic_data.statistics;
+
+            Object.keys(stats).forEach(function (key) {
+                if (stats[key].asset_code == asset) {
+                    used_agent_limits.daily   += stats[key].outcome.daily*1;
+                    used_agent_limits.monthly += stats[key].outcome.monthly*1;
+                }
+            });
+
+        }
+
+        //if daily limit setted for agent
+        if (setted_agent_limits.daily > -1) {
+            if (setted_agent_limits.daily < used_agent_limits.daily + parseFloat(parseFloat(amount).toFixed(2))) {
+                //daily limit is EXCEEDED
+                return innerError(errors.TYPE_STELLAR, errors.ERR_DAILY_OPERATION_LIMIT, 'AGENT DAILY OPERATION LIMIT IS EXCEEDED');
+            }
+        }
+
+        //if monthly limit setted for agent
+        if (setted_agent_limits.monthly > -1) {
+            if (setted_agent_limits.monthly < used_agent_limits.monthly + parseFloat(parseFloat(amount).toFixed(2))) {
+                //monthly limit is EXCEEDED
+                return innerError(errors.TYPE_STELLAR, errors.ERR_MONTHLY_OPERATION_LIMIT, 'AGENT MONTHLY OPERATION LIMIT IS EXCEEDED');
+            }
+        }
+        // Load agent account info
+        return horizon.accounts().accountId(config.agent_public_key).call();
+
+    })
+    // check agent account balance
+    .then(source => {
 
         if (amount > getBalance(source.balances, asset)) {
             return innerError(errors.TYPE_STELLAR, errors.ERR_BALANCE_NOT_ENOUGH, asset + ': NOT ENOUGH BALANCE');
@@ -201,7 +358,7 @@ prompt.get({
     horizon = new StellarSdk.Server(config.horizon_url);
     agent_key = StellarSdk.Keypair.fromSeed(key);
 
-    horizon.loadAccount(config.agent_public_key)
+    horizon.loadAccount(agent_key.accountId())
         .then(source => {
             app.listen(config.app.port);
             console.log(colors.green('Listening on port ' + config.app.port));
