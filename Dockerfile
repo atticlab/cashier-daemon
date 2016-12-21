@@ -1,4 +1,4 @@
-FROM node:argon
+FROM node:7.2
 
 ADD ./app /app
 
