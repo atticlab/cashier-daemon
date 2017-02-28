@@ -141,7 +141,7 @@ app.post('/issue', function(req, res) {
 
 prompt.start();
 prompt.get({
-    description: 'Enter a mnemonic phrase',
+    description: 'Enter mnemonic phrase of distribution agent',
     name: 'key',
     hidden: true,
 }, function(err, result) {
